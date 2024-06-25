@@ -2,6 +2,7 @@ const path = require('path');
 const loaderUtils = require('loader-utils');
 const { merge } = require('webpack-merge');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+
 const commonConfig = (env) => ({
     entry: {
         app: path.join(__dirname, 'src', 'index.tsx')
@@ -51,7 +52,7 @@ const commonConfig = (env) => ({
         new HtmlWebpackPlugin({
             template: './src/index.html',
             favicon: './resources/favicon.ico'
-        }),
+        })
     ],
     resolve: {
         extensions: ['.tsx', '.ts', '.js']

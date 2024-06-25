@@ -19,8 +19,8 @@ interface ExtendedTokenClient extends google.accounts.oauth2.TokenClient {
 }
 
 const config: GoogleCalendarConfig = {
-  clientId: "Secret",
-  apiKey: "Secret",
+  clientId: "1030159274106-2eap8atrikm6orr165ip6mi579t3ev23.apps.googleusercontent.com",
+  apiKey: "AIzaSyBL7yowDy4t2qeS31EKJBojzx51ldqZuNg",
   scope: "https://www.googleapis.com/auth/calendar",
   discoveryDocs: [
     "https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest",
