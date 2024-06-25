@@ -1,0 +1,250 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f0f0f0;
+    margin: 0;
+    padding: 0;
+}
+
+.container {
+    display: flex;
+    height: 100vh;
+}
+
+
+.main {
+    flex: 1;
+    background-color: #ffffff;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    border-top-right-radius: 20px;
+    border-bottom-right-radius: 20px;
+    overflow-x: auto; /* Allow horizontal scrolling if needed */
+    display: flex;
+    flex-direction: column;
+}
+
+.slider-container {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    place-content: center;
+    gap: 5px;
+}
+
+.quarter-container {
+    width: min-content;
+    gap: 10px;
+}
+
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 40px;
+    height: 20px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 20px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 14px;
+    width: 14px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background-color: #2196F3;
+}
+
+input:checked + .slider:before {
+    transform: translateX(20px);
+}
+
+.toggle-label {
+    font-size: 16px;
+    color: #555;
+}
+
+button {
+    display: block;
+    width: 100%;
+    padding: 10px;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    margin-bottom: 10px; /* Add spacing between buttons */
+}
+
+button:disabled {
+    color: rgb(223, 223, 223) !important;
+    background-color: rgb(187, 187, 187) !important;
+    cursor: not-allowed !important;
+}
+
+.sidebar {
+    background-color: #ffffff;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    border-top-left-radius: 20px;
+    border-bottom-left-radius: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    max-width: 18vh;
+}
+
+.generation-container {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.error-text {
+    font-size: small;
+}
+
+.top-bar {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    padding: 0px 10px;
+}
+
+.file-upload-info {
+    position: absolute;
+    bottom: 0px;
+    font-size: small;
+    font-weight: bold;
+    right: 50%;
+    transform: translatex(50%);
+}
+
+.upload-container {
+    display: flex;
+    align-items: center;
+}
+
+.upload-label {
+    cursor: pointer;
+    display: block;
+    background-color: #4caf50; /* Green color for Upload File button */
+    color: white;
+    padding: 10px;
+    border-radius: 5px;
+    font-size: 16px;
+    text-align: center;
+    width: 100%; /* Match width to other buttons */
+    margin-bottom: 10px;
+    max-width: 11vw;
+}
+
+.upload-label:hover {
+    background-color: #45a049; /* Darker green on hover */
+    transition: background-color 0.3s ease;
+}
+
+input[type="file"] {
+    display: none;
+}
+
+.google-container {
+
+}
+
+#importGoogleCalendarButton {
+    background-color: #4285f4; /* Blue color for Import to Google Calendar button */
+}
+
+#importGoogleCalendarButton:hover {
+    background-color: #1a73e8; /* Darker blue on hover */
+    transition: background-color 0.3s ease;
+}
+
+#loginToGoogle {
+    background-color: #ff9400; /* Blue color for Import to Google Calendar button */
+}
+
+#loginToGoogle:hover {
+    background-color: #dd8202; /* Darker blue on hover */
+    transition: background-color 0.3s ease;
+}
+
+.college-container {
+    display: flex;
+    place-content: center;
+    gap: 10px;
+}
+
+.college-box {
+    display: flex;
+    flex-direction: row-reverse;
+}
+
+.college-box input {
+    margin: 0;
+    margin-right: 3px;
+}
+
+.college-major {
+    background-color: #ffb100;
+    width: 15px;
+    height: 15px;
+    border-radius: 25%;
+}
+.college-other {
+    background-color: #ff748e;
+    width: 15px;
+    height: 15px;
+    border-radius: 25%;
+}
+.college-langauge {
+    background-color: #b092ff;
+    width: 15px;
+    height: 15px;
+    border-radius: 25%;
+}
+.college-liberal-arts {
+    background-color: #73b4ff;
+    width: 15px;
+    height: 15px;
+    border-radius: 25%;
+}
+
+.college-color-table-container {
+    display: flex;
+    gap: 20px;
+}
+
+.college-color-container {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.college-color-text {
+
+}
