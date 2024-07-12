@@ -64,8 +64,12 @@ export const App: React.FC = () => {
         fileReader.readAsArrayBuffer(fileList[0]);
     };
 
+    const getExcelURL = (): string => {
+        return `https://senapp.github.io/APU-Timetable/resources/${isCurriculum2023 ? "2023" : "2017"}${college}_Curriculum_24Spring_240529.xlsx`
+    }
+
     const onGenerateSchedule = async (courses: Course[]) => {
-        let response = await fetch(`https://senappp.github.io/APU-Timetable/resources/${isCurriculum2023 ? "2023" : "2017"}${college}_Curriculum_24Spring_240529.xlsx`);
+        let response = await fetch(getExcelURL());
         let data = await response.blob();
         setExcelUpdateRequest(false);
 
@@ -88,7 +92,7 @@ export const App: React.FC = () => {
 
     const refreshExcel = async () => {
         StartLoading("Loading Curriculum");
-        let response = await fetch(`https://senappp.github.io/APU-Timetable/resources/${isCurriculum2023 ? "2023" : "2017"}${college}_Curriculum_24Spring_240529.xlsx`);
+        let response = await fetch(getExcelURL());
         let data = await response.blob();
         setExcelUpdateRequest(false);
 
