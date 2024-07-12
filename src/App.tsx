@@ -65,7 +65,7 @@ export const App: React.FC = () => {
     };
 
     const onGenerateSchedule = async (courses: Course[]) => {
-        let response = await fetch(`https://ritsumeikancoding.github.io/Shoganai/resources/${isCurriculum2023 ? "2023" : "2017"}${college}_Curriculum_24Spring_240529.xlsx`);
+        let response = await fetch(`https://senappp.github.io/APU-Timetable/resources/${isCurriculum2023 ? "2023" : "2017"}${college}_Curriculum_24Spring_240529.xlsx`);
         let data = await response.blob();
         setExcelUpdateRequest(false);
 
