@@ -1,0 +1,75 @@
+.course-search-container {
+    max-width: 13vw;
+    width: inherit;
+    align-self: center;
+
+}
+
+.course-search-result-container {
+    max-width: inherit;
+    width: inherit;
+    max-height: 50vh;
+    overflow: auto;
+}
+
+.course-search-label {
+    max-width: inherit;
+    width: inherit;
+}
+
+.course-search-box {
+    max-width: inherit;
+    width: inherit;
+    padding-block: 0px;
+    padding-inline: 0px;
+    margin-bottom: 5px;
+}
+
+.course-row {
+    display: flex;
+    align-items: center;
+    background-color: #d9d9d9;
+    margin-bottom: 5px;
+    padding: 5px;
+    border-radius: 5px;
+    gap: 5px;
+    min-width: 11vw;
+    max-width: 11vw;
+}
+
+.course-add-button {
+    width: 15px;
+    height: 15px;
+    flex-shrink: 0;
+    background-color: #4caf50;
+    border-radius: 25%;
+    color: white;
+    cursor: pointer;
+    text-align: center;
+    line-height: 15px;
+}
+
+.course-row-main-container  {
+    flex: 1;
+}
+
+
+.course-row-name  {
+    font-size: x-small;
+    text-align: left;
+    flex: 1;
+}
+.course-row-quarter  {
+    font-size: xx-small;
+    text-align: left;
+}
+
+.course-row-info  {
+    font-size: x-small;
+    text-align: right;
+}
+
+.course-row-info-container  {
+    display: flex;
+    flex-direction: column;
+}

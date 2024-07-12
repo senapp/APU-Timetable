@@ -123,7 +123,7 @@ export const GoogleCalenderCallTestEvent = async (courses: Course[], quarterTWoA
     StartLoading("Creating Events");
     var eventPromises: gapi.client.HttpRequest<gapi.client.calendar.Event>[]  = [];
     courses.forEach(course => {
-        if (course.day === "0" || course.period === "0" || course.semester !== "0" && course.semester !== currentQuarter) {
+        if (course.day === "0" || course.period === "0" || course.quarter !== "0" && course.quarter !== currentQuarter) {
             return;
         }
 
@@ -136,21 +136,25 @@ export const GoogleCalenderCallTestEvent = async (courses: Course[], quarterTWoA
         startTime.setHours(startPeriod.hours, startPeriod.minutes, 0);
         endTime.setHours(endPeriod.hours, endPeriod.minutes, 0);
 
-        const colorFromCollege = course.college === "専門/Major"
+        let colorFromCollege = course.college === "専門/Major"
           ? "5"
           : course.college === "他学部/Other College"
           ? "4"
           : course.college === "言語/Language"
-          ? "3"
+          ? "1"
           : course.college === "教養/Liberal Arts"
           ? "7"
           : "";
 
+        if (course.isTA) {
+          colorFromCollege = "2";
+        }
+
         const event = {
-          summary: `📖 ${course.name}`,
+          summary: `📖 ${course.isTA ? `TA: ${course.name}` : course.name}`,
           location: `📍 ${course.location}`,
           colorId: colorFromCollege,
-          description: `🧑‍🏫 Instructor: ${course.instructor}\n⭐ Credits: ${course.credits}\n🔗 Code: ${course.code}`,
+          description: `🧑‍🏫 Instructor: ${course.instructor}\n⭐ Credits: ${course.isTA ? "TA" : course.credits}\n🔗 Code: ${course.code}`,
           recurrence: ['RRULE:FREQ=WEEKLY;UNTIL=20240801'],
           start: {
             dateTime: startTime.toISOString(),

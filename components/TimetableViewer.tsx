@@ -6,24 +6,27 @@ type Props = {
     courses: Course[],
     displayCourses: boolean
     quarterTwoActive: boolean;
+    setLoadedCourses: (courses: Course[]) => void;
+    forceUpdateParent: () => void;
 }
 
-export const TimetableViewer: React.FC<Props> = ({courses, displayCourses, quarterTwoActive}) => {
+export const TimetableViewer: React.FC<Props> = ({courses, forceUpdateParent, setLoadedCourses, displayCourses, quarterTwoActive}) => {
     const currentQuarter = quarterTwoActive === false ? "1" : "2";
+    const [, forceUpdate] = React.useReducer(x => x + 1, 0);
     const makeTableBody = () => {
         const makeRow = (number: number, courses: Course[]) => {
-            const quarterCourses = courses.filter((course) => course.semester === "0" || course.semester === currentQuarter)
+            const quarterCourses = courses.filter((course) => course.quarter === "0" || course.quarter === currentQuarter)
             const text = number === 7 ? "Session" : "Period " + number;
 
             return (
             <tr key={number}>
                 <td className={css.periodBox}>{text}</td>
                 { displayCourses ? <>
-                    <ClassBox course={quarterCourses.find((course) => course.day === "1")} />
-                    <ClassBox course={quarterCourses.find((course) => course.day === "2")} />
-                    <ClassBox course={quarterCourses.find((course) => course.day === "3")} />
-                    <ClassBox course={quarterCourses.find((course) => course.day === "4")} />
-                    <ClassBox course={quarterCourses.find((course) => course.day === "5")} />
+                    <ClassBox onUpdateTA={onUpdateTA} course={quarterCourses.find((course) => course.day === "1")} />
+                    <ClassBox onUpdateTA={onUpdateTA} course={quarterCourses.find((course) => course.day === "2")} />
+                    <ClassBox onUpdateTA={onUpdateTA} course={quarterCourses.find((course) => course.day === "3")} />
+                    <ClassBox onUpdateTA={onUpdateTA} course={quarterCourses.find((course) => course.day === "4")} />
+                    <ClassBox onUpdateTA={onUpdateTA} course={quarterCourses.find((course) => course.day === "5")} />
                 </>:
                 <>
                     <td className={css.cellBox}></td>
@@ -34,7 +37,7 @@ export const TimetableViewer: React.FC<Props> = ({courses, displayCourses, quart
                 </>}
             </tr>);
         }
-       
+
         const makeRows = () => {
             const outputRows: React.JSX.Element[] = [];
             for (let index = 1; index <= 6; index++) {
@@ -47,6 +50,18 @@ export const TimetableViewer: React.FC<Props> = ({courses, displayCourses, quart
         return (<tbody>
             {makeRows()}
         </tbody>)
+    }
+
+    const onUpdateTA = (course: Course, checked: boolean) => {
+        for (let index = 0; index < courses.length; index++) {
+            if (course.code === courses[index].code) {
+                courses[index].isTA = checked;
+            }
+        }
+
+        setLoadedCourses(courses);
+        forceUpdate();
+        forceUpdateParent();
     }
 
     return (
@@ -69,15 +84,16 @@ export const TimetableViewer: React.FC<Props> = ({courses, displayCourses, quart
 }
 
 type PropsClassBox = {
-    course?: Course,
+    course?: Course;
+    onUpdateTA: (course: Course, checked: boolean) => void;
 }
 
-export const ClassBox: React.FC<PropsClassBox> = ({course}) => {
+export const ClassBox: React.FC<PropsClassBox> = ({ course, onUpdateTA }) => {
     if (course === undefined) {
         return (<td className={css.cellBox}></td>)
     }
 
-    const collegeClass = course.college === "専門/Major"
+    let collegeClass = course.college === "専門/Major"
         ? css.collegeMajor
         : course.college === "他学部/Other College"
         ? css.collegeOther
@@ -86,6 +102,10 @@ export const ClassBox: React.FC<PropsClassBox> = ({course}) => {
         : course.college === "教養/Liberal Arts"
         ? css.collegeLiberalArts
         : "";
+
+    if (course.isTA) {
+        collegeClass = css.collegeTa;
+    }
 
     return (
         <td className={`${css.cellBox} ${collegeClass}`}>
@@ -114,8 +134,9 @@ export const ClassBox: React.FC<PropsClassBox> = ({course}) => {
                     {`🧑‍🏫 ${course.instructor}`}
                 </div>
             }
-            <div className={css.courseCredits}>{`⭐ Credits: ${course.credits}`}</div>
+            <div className={css.courseCredits}>{course.isTA ? `⭐ Credits: TA` : `⭐ Credits: ${course.credits}`}</div>
             <div className={css.courseCode}>{`🔗 ${course.code}`}</div>
+            <input type="checkbox" className={css.taButton} checked={course.isTA ?? false} onChange={(e) => onUpdateTA(course, e.target.checked)}/>
         </td>
     );
 };

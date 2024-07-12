@@ -110,3 +110,18 @@
 .college-liberal-arts {
     background-color: #73b4ff;
 }
+.college-ta {
+    background-color: #54cf63;
+}
+
+.ta-button {
+    position: absolute;
+    display: flex;
+    place-items: center;
+    transform: translateY(-10px);
+}
+
+.ta-button::after {
+    content: "TA";
+    margin-left: 18px;
+}

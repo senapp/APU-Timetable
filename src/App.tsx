@@ -1,11 +1,13 @@
 import * as React from 'react';
 import css from './App.module.css';
 import { ParsePDFFile } from '../control/PDFReader';
-import { ReadExcelFile } from '../control/ExcelFilter';
+import { AppendCourseDataFromExcel, GetRowsOfExcel } from '../control/ExcelFilter';
 import { Course } from '../control/CourseData';
 import { TimetableViewer } from '../components/TimetableViewer';
 import { GoogleCalenderCallTestEvent, GoogleCalenderLoginRequest } from '../API/API';
 import { StartLoading, StopLoading } from '.';
+import { CourseSearch } from '../components/CourseSearch';
+import { Row } from 'read-excel-file';
 
 export const App: React.FC = () => {
     const [quarterTwoActive, setQuarterTwoActive] = React.useState(false);
@@ -15,24 +17,34 @@ export const App: React.FC = () => {
     const [errorText, setErrorText] = React.useState("");
     const [fileText, setFileText] = React.useState("");
     const [college, setCollege] = React.useState("APM");
+    const [excelRows, setExcelRows] = React.useState<Row[]>();
+    const [excelUpdateRequest, setExcelUpdateRequest] = React.useState(false);
+    const [, forceUpdate] = React.useReducer(x => x + 1, 0);
 
     React.useEffect(() => {
         if (loadedCourses !== null && loadedCourses.length > 0 && loadedCourses[0].location !== undefined) {
             setDisplayCourses(true);
         }
-    }, [loadedCourses])
+    }, [loadedCourses]);
 
     React.useEffect(() => {
         if (!isCurriculum2023 && college === "ST") {
             setIsCurriculum2023(true);
         }
-    }, [college])
+    }, [college]);
+
+    React.useEffect(() => {
+        if (fileText !== "") {
+            setExcelUpdateRequest(true);
+        }
+    }, [college, isCurriculum2023]);
 
     const handleFileChange = function (e: React.ChangeEvent<HTMLInputElement>) {
         const fileList = e.target.files;
         if (!fileList) return;
 
         const fileReader = new FileReader();
+        setDisplayCourses(false)
         fileReader.onload = function (e: Event) {
             var typedarray = fileReader.result as ArrayBuffer;
 
@@ -40,7 +52,6 @@ export const App: React.FC = () => {
             const result = ParsePDFFile(typedarray);
             result.then((res) => {
                 setLoadedCourses(res.courses);
-                setDisplayCourses(false)
                 setErrorText(res.error !== undefined ? res.error.messeage : "");
                 setFileText(fileList[0].name);
                 if (res.courses.length > 0) {
@@ -56,19 +67,37 @@ export const App: React.FC = () => {
     const onGenerateSchedule = async (courses: Course[]) => {
         let response = await fetch(`https://ritsumeikancoding.github.io/Shoganai/resources/${isCurriculum2023 ? "2023" : "2017"}${college}_Curriculum_24Spring_240529.xlsx`);
         let data = await response.blob();
+        setExcelUpdateRequest(false);
 
         const fileReader = new FileReader();
-        fileReader.onload = function (e: Event) {
+        fileReader.onload = async function (e: Event) {
             var typedarray = fileReader.result as ArrayBuffer;
 
-            const result = ReadExcelFile(courses, typedarray);
-            setLoadedCourses(result);
+            const result = await AppendCourseDataFromExcel(courses, typedarray);
+            setExcelRows(result.rows)
+            setLoadedCourses(result.courses);
             StopLoading();
 
             const element = document.getElementById("fileInput");
             if (element !== undefined) {
                 (element as HTMLInputElement).value = "";
             }
+        };
+        fileReader.readAsArrayBuffer(data);
+    };
+
+    const refreshExcel = async () => {
+        StartLoading("Loading Curriculum");
+        let response = await fetch(`https://senappp.github.io/APU-Timetable/resources/${isCurriculum2023 ? "2023" : "2017"}${college}_Curriculum_24Spring_240529.xlsx`);
+        let data = await response.blob();
+        setExcelUpdateRequest(false);
+
+        const fileReader = new FileReader();
+        fileReader.onload = async function (e: Event) {
+            var typedarray = fileReader.result as ArrayBuffer;
+            const result = await GetRowsOfExcel(typedarray);
+            setExcelRows(result);
+            StopLoading();
         };
         fileReader.readAsArrayBuffer(data);
     };
@@ -85,7 +114,7 @@ export const App: React.FC = () => {
         if (loadedCourses !== undefined && loadedCourses.length > 0) {
             let credits = 0;
             const creditsArray = loadedCourses
-                .filter((course) => course.isExtraClass === undefined || course.isExtraClass === false)
+                .filter((course) => !course.isTA && course.isExtraClass === undefined || !course.isTA && course.isExtraClass === false)
                 .map((course) => course.credits);
             creditsArray.forEach(credit => {
                 credits += parseInt(credit);
@@ -121,12 +150,18 @@ export const App: React.FC = () => {
                             <span className={css.slider}></span>
                         </label>
                         <span id={css.toogleLabel}>{"2023"}</span>
-                    </div> 
+                    </div>
+                    {
+                        excelUpdateRequest
+                        ? <button className={css.refreshButton} onClick={refreshExcel}>Load curriculum?</button>
+                        : <></>
+                    }
                     <div className={css.uploadContainer}>
                         <label htmlFor="fileInput" className={css.uploadLabel}>Upload and Make Timetable</label>
                         <input type="file" id="fileInput" accept=".pdf" onChange={handleFileChange} />
                     </div>
                     <div className={css.errorText}>{errorText}</div>
+                    <CourseSearch loadedCourses={loadedCourses} excelRows={excelRows} display={displayCourses} setLoadedCourses={setLoadedCourses} />
                 </div>
                 <div className={css.googleContainer}>
                     <button id={css.loginToGoogle} onClick={onLoginGoogle}>Login to Google</button>
@@ -159,10 +194,14 @@ export const App: React.FC = () => {
                             <div className={css.collegeOther}></div>
                             <div className={css.collegeColorText}>Other</div>
                         </div>
+                        <div className={css.collegeColorContainer}>
+                            <div className={css.collegeTa}></div>
+                            <div className={css.collegeColorText}>TA</div>
+                        </div>
                     </div>
                     <div>{getCredits()}</div>
                 </div>
-                <TimetableViewer courses={loadedCourses} displayCourses={displayCourses} quarterTwoActive={quarterTwoActive} />
+                <TimetableViewer forceUpdateParent={forceUpdate} setLoadedCourses={setLoadedCourses} courses={loadedCourses} displayCourses={displayCourses} quarterTwoActive={quarterTwoActive} />
                 <div className={css.fileUploadInfo}>{fileText}</div>
             </div>
         </div>
