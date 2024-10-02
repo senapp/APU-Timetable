@@ -34,7 +34,7 @@ export const App: React.FC = () => {
     }, [college]);
 
     React.useEffect(() => {
-        if (fileText !== "") {
+        if (true) {
             setExcelUpdateRequest(true);
         }
     }, [college, isCurriculum2023]);
@@ -95,6 +95,7 @@ export const App: React.FC = () => {
         let response = await fetch(getExcelURL());
         let data = await response.blob();
         setExcelUpdateRequest(false);
+        setDisplayCourses(true);
 
         const fileReader = new FileReader();
         fileReader.onload = async function (e: Event) {
