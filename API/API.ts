@@ -115,21 +115,17 @@ const CreateOrGetApuCalendar = async (): Promise<string> => {
   });
 }
 
-export const GoogleCalenderCallTestEvent = async (courses: Course[], quarterTWoActive: boolean) => {
+export const GoogleCalenderCallTestEvent = async (courses: Course[]) => {
     StartLoading("Getting Google Calendar");
     const apuCalendar = await CreateOrGetApuCalendar();
-    const currentQuarter = quarterTWoActive === false ? "1" : "2";
 
     StartLoading("Creating Events");
     var eventPromises: gapi.client.HttpRequest<gapi.client.calendar.Event>[]  = [];
     courses.forEach(course => {
-        if (course.day === "0" || course.period === "0" || course.quarter !== "0" && course.quarter !== currentQuarter) {
+        if (course.day === "0" || course.period === "0") {
             return;
         }
-
-        var now = new Date;
-        var today = now.getDate() - now.getDay() + parseInt(course.day);
-
+        
         const startTimeQ1 = "20241003";
         const endTimeQ1 = "20241122";
 
@@ -147,7 +143,14 @@ export const GoogleCalenderCallTestEvent = async (courses: Course[], quarterTWoA
           ? startTimeQ2
           : startTimeQ1;
 
-        var startTime = new Date(start);
+        var now = new Date(
+          Number.parseInt(start.substring(0, 4)),
+          Number.parseInt(start.substring(4, 6)) - 1,
+          Number.parseInt(start.substring(6, 8)));
+
+        var today = now.getDate() - now.getDay() + parseInt(course.day);
+
+        var startTime = new Date(now.setDate(today));
         let startPeriod = PeriodStartTimes[parseInt(course.period)];
         let endPeriod = PeriodEndTimes[parseInt(course.period)];
         var endTime = new Date(startTime);
@@ -181,6 +184,13 @@ export const GoogleCalenderCallTestEvent = async (courses: Course[], quarterTWoA
           end: {
             dateTime: endTime.toISOString(),
             timeZone: "Asia/Tokyo"
+          },
+          reminders: {
+            useDefault: false,
+            overrides: [{
+              method: "popup",
+              minutes: 10
+            }]
           },
         };
 

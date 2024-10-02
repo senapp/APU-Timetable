@@ -112,7 +112,7 @@ export const App: React.FC = () => {
     };
 
     const onTestGoogleCalender = async () => {
-        GoogleCalenderCallTestEvent(loadedCourses, quarterTwoActive);
+        GoogleCalenderCallTestEvent(loadedCourses);
     };
 
     const getCredits = (): string => {
