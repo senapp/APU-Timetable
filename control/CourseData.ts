@@ -26,8 +26,7 @@ export const StringToCourse = (courseString: string, language: Langauge, previou
     {
         let splits = courseString.trim().split("   ");
         let isExtraClass = previousCourseCodes.includes(splits[3]);
-        let languageMatches = splits[5].match(/[EJ]/g);
-        let isLanguageClass = languageMatches === null || languageMatches.length === 0;
+        let isLanguageClass = !(splits[5] == "E" || splits[5] == "J");
         let instructorNameIsSplit =
             splits.length >= 9 && !isExtraClass ||
             splits.length >= 8 && isExtraClass ||
@@ -35,6 +34,7 @@ export const StringToCourse = (courseString: string, language: Langauge, previou
             isExtraClass && isLanguageClass && splits.length >= 7;
 
         let count = 0;
+
         let course: Course = {
             quarter: parseQuarter(splits[count++], language),
             day: parseDay(parseSplit(splits[count++], language), language),
@@ -54,7 +54,8 @@ export const StringToCourse = (courseString: string, language: Langauge, previou
         }
         return course;
     }
-    catch {
+    catch (e) {
+        console.log(e);
         return null;
     }
 }

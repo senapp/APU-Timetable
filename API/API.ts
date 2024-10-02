@@ -129,7 +129,25 @@ export const GoogleCalenderCallTestEvent = async (courses: Course[], quarterTWoA
 
         var now = new Date;
         var today = now.getDate() - now.getDay() + parseInt(course.day);
-        var startTime = new Date(now.setDate(today));
+
+        const startTimeQ1 = "20241003";
+        const endTimeQ1 = "20241122";
+
+        const startBreak1 = "20241220";
+        const endBreak1 = "20250105";
+
+        const startTimeQ2 = "20241127";
+        const endTimeQ2 = "20250205";
+
+        const untilTime = course.quarter == "1"
+          ? endTimeQ1
+          : endTimeQ2;
+
+        const start = course.quarter == "2"
+          ? startTimeQ2
+          : startTimeQ1;
+
+        var startTime = new Date(start);
         let startPeriod = PeriodStartTimes[parseInt(course.period)];
         let endPeriod = PeriodEndTimes[parseInt(course.period)];
         var endTime = new Date(startTime);
@@ -155,7 +173,7 @@ export const GoogleCalenderCallTestEvent = async (courses: Course[], quarterTWoA
           location: `📍 ${course.location}`,
           colorId: colorFromCollege,
           description: `🧑‍🏫 Instructor: ${course.instructor}\n⭐ Credits: ${course.isTA ? "TA" : course.credits}\n🔗 Code: ${course.code}`,
-          recurrence: ['RRULE:FREQ=WEEKLY;UNTIL=20240801'],
+          recurrence: [`RRULE:FREQ=WEEKLY;UNTIL=${untilTime}`],
           start: {
             dateTime: startTime.toISOString(),
             timeZone: "Asia/Tokyo"
