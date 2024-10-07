@@ -1,49 +1,29 @@
 import * as React from 'react';
 import css from './CourseSearch.module.css';
 import { Row } from 'read-excel-file';
-import { Course, ExcelRowToCourse } from '../control/CourseData';
+import { addManualData, Course, deParseDay, deParseQuarter, ExcelRowToCourse, parseDayExcel } from '../control/CourseData';
 
 type Props = {
-    excelRows?: Row[];
+    allCourses?: Course[];
     display: boolean;
     loadedCourses: Course[]
     setLoadedCourses: (courses: Course[]) => void;
 }
 
-export const CourseSearch: React.FC<Props> = ({ excelRows, display, loadedCourses, setLoadedCourses }) => {
+export const CourseSearch: React.FC<Props> = ({ allCourses, display, loadedCourses, setLoadedCourses }) => {
     const [filterText, setFilterText] = React.useState("");
 
-    const addRowToCourses = (selectedRow: Row) => {
-        if (!excelRows) {
+    const addNewCourse = (selectedCourse: Course) => {
+        if (!allCourses) {
             return;
         }
 
-        const relevantRows: Row[] = [];
-        for (let index = 0; index < excelRows.length; index++) {
-            const row = excelRows[index];
-            if (row[6] === selectedRow[6]) {
-                relevantRows.push(row);
+        let courses: Course[] = [];
+        allCourses.forEach(course => {
+            if (course.code === selectedCourse.code) {
+                courses.push(course);
             }
-        }
-
-        const courses: Course[] = [];
-        for (let index = 0; index < relevantRows.length; index++) {
-            const row = relevantRows[index];
-            const res = ExcelRowToCourse(row);
-            if (res) {
-                if (relevantRows.length > 1) {
-                    res.credits = relevantRows.length.toString();
-                } else {
-                    res.credits = "2";
-                }
-
-                if (index > 0) {
-                    res.isExtraClass = true;
-                }
-
-                courses.push(res);
-            }
-        }
+        });
 
         let error = false;
         courses.forEach(newCourse => {
@@ -66,6 +46,9 @@ export const CourseSearch: React.FC<Props> = ({ excelRows, display, loadedCourse
                 }
             });
         });
+
+        courses = addManualData(courses);
+
         if (!error) {
             setLoadedCourses([...loadedCourses, ...courses])
             setFilterText("");
@@ -73,63 +56,49 @@ export const CourseSearch: React.FC<Props> = ({ excelRows, display, loadedCourse
     }
 
     const getResults = () => {
-        if (!excelRows || !display || filterText === "" || filterText.length < 3) {
+        if (!allCourses || !display || filterText === "" || filterText.length < 3) {
             return;
         }
 
-        const returnRowsExcel: Row[] = [];
-        let excededSearch = false;
-        let unqiueHits = 0;
-        for (let index = 0; index < excelRows.length; index++) {
-            const row = excelRows[index];
-            if (unqiueHits >= 10) {
-                excededSearch = true;
-            }
-            if (row[8] !== null && (row[8].toString() + row[8].toString()).toLowerCase().includes(filterText.toLowerCase())) {
-                if (!returnRowsExcel.find((addedRow) => addedRow[6] === row[6])) {
-                    unqiueHits++;
+        const returnCourses: Course[] = [];
+        for (let index = 0; index < allCourses.length; index++) {
+            const course = allCourses[index];
+            if ((course.nameEN).toLowerCase().includes(filterText.toLowerCase())) {
+                if (!returnCourses.find((addedCourse) => addedCourse.code === course.code)) {
+                    returnCourses.push(course)
                 }
-                returnRowsExcel.push(row)
+            } else if (filterText.includes("#")) {
+                let split = filterText.split("#");
+                if (split[1].trim() !== "" && deParseDay(course.day).includes(split[0]) && course.period.includes(split[1]))
+                {
+                    if (!returnCourses.find((addedCourse) => addedCourse.code === course.code)) {
+                        returnCourses.push(course)
+                    }
+                }
             }
         }
+
         const returnRows: React.JSX.Element[] = [];
-        returnRowsExcel.sort((a, b) => {
-            if (a[8].toString() < b[8].toString()) {
+        returnCourses.sort((a, b) => {
+            if (a.nameEN < b.nameEN) {
                 return -1;
               }
-              if (a[8].toString() > b[8].toString()) {
+              if (a.nameEN > b.nameEN) {
                 return 1;
               }
               return 0;
-            });
-        for (let index = 0; index < returnRowsExcel.length; index++) {
-            const row = returnRowsExcel[index];
-            if (index + 1 < returnRowsExcel.length) {
-                if (row[6].toString() === returnRowsExcel[index + 1][6].toString()) {
-                    if (index + 2 < returnRowsExcel.length) {
-                        if (row[6].toString() === returnRowsExcel[index + 2][6].toString()) {
-                            if (index + 3 < returnRowsExcel.length) {
-                                if (row[6].toString() === returnRowsExcel[index + 3][6].toString()) {
-                                    returnRows.push(<CourseRow rows={[row, returnRowsExcel[index + 1], returnRowsExcel[index + 2], returnRowsExcel[index + 3]]} addFunction={addRowToCourses} />);
-                                    index += 3;
-                                    continue;
-                                }
-                            }
-                            returnRows.push(<CourseRow rows={[row, returnRowsExcel[index + 1], returnRowsExcel[index + 2]]} addFunction={addRowToCourses} />);
-                            index += 2;
-                            continue;
-                        }
-                    }
-                    returnRows.push(<CourseRow rows={[row, returnRowsExcel[index + 1]]} addFunction={addRowToCourses} />);
-                    index += 1;
-                    continue;
-                }
+        });
+
+        for (let index = 0; index < returnCourses.length; index++) {
+            const course = returnCourses[index];
+            let courses = allCourses.filter(c => c.code === course.code);
+            if (courses.length > 1) {
+                returnRows.push(<CourseRow courses={courses} addFunction={addNewCourse} />);
+            } else {
+                returnRows.push(<CourseRow course={course} addFunction={addNewCourse} />);
             }
-            returnRows.push(<CourseRow row={row} addFunction={addRowToCourses} />);
         }
-        // if (excededSearch) {
-        //     returnRows.push(<CourseRow addFunction={addRowToCourses} />);
-        // }
+
         return returnRows;
     };
     
@@ -149,17 +118,17 @@ export const CourseSearch: React.FC<Props> = ({ excelRows, display, loadedCourse
 }
 
 type PropsCourseRow = {
-    row?: Row;
-    rows?: Row[];
-    addFunction?: (row: Row) => void;
+    course?: Course;
+    courses?: Course[];
+    addFunction?: (course: Course) => void;
 }
 
-export const CourseRow: React.FC<PropsCourseRow> = ({ row, rows, addFunction }) => {
-    const makeInfoBox = (checkedRows: Row[]) => {
+export const CourseRow: React.FC<PropsCourseRow> = ({ course, courses, addFunction }) => {
+    const makeInfoBox = (checkedCourses: Course[]) => {
         const elements: React.JSX.Element[] = [];
-        for (let index = 0; index < checkedRows.length; index++) {
-            const element = checkedRows[index];
-            elements.push(<div className={css.courseRowInfo}>{`${element[1]} ${element[2]}`}</div>);
+        for (let index = 0; index < checkedCourses.length; index++) {
+            const element = checkedCourses[index];
+            elements.push(<div className={css.courseRowInfo}>{`${deParseDay(element.day)} ${element.period}`}</div>);
         }
         return elements;
     }
@@ -167,31 +136,33 @@ export const CourseRow: React.FC<PropsCourseRow> = ({ row, rows, addFunction }) 
     return (
         <div className={css.courseRow}>
             {
-                row !== undefined && addFunction !== undefined
-                ? <div className={css.courseAddButton} onClick={() => addFunction(row)}>+</div>
-                : rows !== undefined && addFunction !== undefined
-                    ? <div className={css.courseAddButton} onClick={() => addFunction(rows[0])}>+</div>
+                course !== undefined && addFunction !== undefined
+                ? <div className={css.courseAddButton} onClick={() => addFunction(course)}>+</div>
+                : courses !== undefined && addFunction !== undefined
+                    ? <div className={css.courseAddButton} onClick={() => addFunction(courses[0])}>+</div>
                     : <></>
             }
             {
-                row
+                course
                 ? <div className={css.courseRowMainContainer}>
-                    <div className={css.courseRowName}>{`${row[8].toString()}`}</div>
-                    <div className={css.courseRowQuarter}>{`${row[0].toString()}`}</div>
+                    <div className={css.courseRowName}>{`${course.nameEN}`}</div>
+                    <div className={css.courseRowQuarter}>{`${deParseQuarter(course.quarter)}`}</div>
+                    <div className={css.courseRowMinSem}>{`Avaible from semester: ${course.semesterMin}`}</div>
                 </div>
-                : rows
+                : courses
                     ? <div className={css.courseRowMainContainer}>
-                        <div className={css.courseRowName}>{`${rows[0][8].toString()}`}</div>
-                        <div className={css.courseRowQuarter}>{`${rows[0][0].toString()}`}</div>
-                    </div>
+                        <div className={css.courseRowName}>{`${courses[0].nameEN}`}</div>
+                        <div className={css.courseRowQuarter}>{`${deParseQuarter(courses[0].quarter)}`}</div>
+                        <div className={css.courseRowMinSem}>{`Avaible from semester: ${courses[0].semesterMin}`}</div>
+                        </div>
                     : <div className={css.courseRowName}>{"Specify you search..."}</div>
             }
             {
-                row
-                ? <div className={css.courseRowInfo}>{`${row[1]} ${row[2]}`}</div>
-                : rows
+                course
+                ? <div className={css.courseRowInfo}>{`${deParseDay(course.day)} ${course.period}`}</div>
+                : courses
                     ? <div className={css.courseRowInfoContainer}>
-                        {makeInfoBox(rows)}
+                        {makeInfoBox(courses)}
                     </div>
                     : <></>
             }

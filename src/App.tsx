@@ -1,10 +1,10 @@
 import * as React from 'react';
 import css from './App.module.css';
 import { ParsePDFFile } from '../control/PDFReader';
-import { AppendCourseDataFromExcel, GetRowsOfExcel } from '../control/ExcelFilter';
-import { Course } from '../control/CourseData';
+import { ParseExcelRows } from '../control/ExcelFilter';
+import { addManualData, Course, ExcelRowToCourse } from '../control/CourseData';
 import { TimetableViewer } from '../components/TimetableViewer';
-import { GoogleCalenderCallTestEvent, GoogleCalenderLoginRequest } from '../API/API';
+import { GoogleCalenderCreateEvents, GoogleCalenderLoginRequest } from '../API/API';
 import { StartLoading, StopLoading } from '.';
 import { CourseSearch } from '../components/CourseSearch';
 import { Row } from 'read-excel-file';
@@ -17,8 +17,9 @@ export const App: React.FC = () => {
     const [errorText, setErrorText] = React.useState("");
     const [fileText, setFileText] = React.useState("");
     const [college, setCollege] = React.useState("APM");
-    const [excelRows, setExcelRows] = React.useState<Row[]>();
-    const [excelUpdateRequest, setExcelUpdateRequest] = React.useState(false);
+    const [fullExcelCourses, setFullExcelCourses] = React.useState<Course[]>();
+    const [excelUpdateRequest, setExcelUpdateRequest] = React.useState(true);
+    const [currentExcelFile, setCurrentExcelFile] = React.useState("");
     const [, forceUpdate] = React.useReducer(x => x + 1, 0);
 
     React.useEffect(() => {
@@ -34,85 +35,113 @@ export const App: React.FC = () => {
     }, [college]);
 
     React.useEffect(() => {
-        if (true) {
+        if (getExcelURL() !== currentExcelFile) {
             setExcelUpdateRequest(true);
+        } else {
+            setExcelUpdateRequest(false);
         }
     }, [college, isCurriculum2023]);
 
     const handleFileChange = function (e: React.ChangeEvent<HTMLInputElement>) {
         const fileList = e.target.files;
-        if (!fileList) return;
+        if (!fileList || fileList.length === 0) return;
 
         const fileReader = new FileReader();
         setDisplayCourses(false)
         fileReader.onload = function (e: Event) {
             var typedarray = fileReader.result as ArrayBuffer;
-
+            
             StartLoading("Creating Schedule");
             const result = ParsePDFFile(typedarray);
-            result.then((res) => {
-                setLoadedCourses(res.courses);
+            result.then(async (res) => {
                 setErrorText(res.error !== undefined ? res.error.messeage : "");
-                setFileText(fileList[0].name);
-                if (res.courses.length > 0) {
-                    onGenerateSchedule(res.courses);
-                } else {
-                    StopLoading();
+                let courses = await getCoursesFromExcel(res.courseCodes);    
+
+                setLoadedCourses(courses);
+                StopLoading();
+                const element = document.getElementById("fileInput");
+                if (element !== undefined) {
+                    (element as HTMLInputElement).value = "";
                 }
+                
             })
         }
         fileReader.readAsArrayBuffer(fileList[0]);
+        setFileText(fileList[0].name);
     };
 
     const getExcelURL = (): string => {
         return `https://senapp.github.io/APU-Timetable/resources/${isCurriculum2023 ? "2023" : "2017"}${college}_Latest.xlsx`
     }
 
-    const onGenerateSchedule = async (courses: Course[]) => {
-        let response = await fetch(getExcelURL());
-        let data = await response.blob();
-        setExcelUpdateRequest(false);
+    const updateExcel = async (): Promise<Course[]> => {
+        console.log("Updating excel...")
+        return new Promise(async (resolve, reject) => {
+            StartLoading("Loading Courses");
+            let response = await fetch(getExcelURL());
+            setCurrentExcelFile(getExcelURL());
+            let data = await response.blob();
+            
+            const fileReader = new FileReader();
+            fileReader.onload = async function (e: Event) {
+                var typedarray = fileReader.result as ArrayBuffer;
+                
+                const resultRows = await ParseExcelRows(typedarray);
+                let fullCourseList: Course[] = [];
+                for (let index = 0; index < resultRows.length; index++) {
+                    const row = resultRows[index];
+                    if (row !== undefined && row !== null && row[0] !== undefined && row[0] !== null) {
+                        if (row[0].toString() === "Semester" || row[0].toString() === "1Q" || row[0].toString() === "2Q" || row[0].toString() === "Session1") {
+                            fullCourseList.push(ExcelRowToCourse(row));
+                        }
+                    }
+                }
 
-        const fileReader = new FileReader();
-        fileReader.onload = async function (e: Event) {
-            var typedarray = fileReader.result as ArrayBuffer;
+                setFullExcelCourses(fullCourseList)
+                setExcelUpdateRequest(false);
+                setDisplayCourses(true);
+                StopLoading();
+                
+                const element = document.getElementById("fileInput");
+                if (element !== undefined) {
+                    (element as HTMLInputElement).value = "";
+                }
+                
+                resolve(fullCourseList)
+            };
+            fileReader.readAsArrayBuffer(data);
+        });
+    }
+    
+    const getCoursesFromExcel = async (courseCodes: string []): Promise<Course[]> => {
+        let fullCourseList: Course[] = [];
+        if (fullExcelCourses === undefined || excelUpdateRequest) {
+            fullCourseList = await updateExcel()
+        } else {
+            fullCourseList = fullExcelCourses;
+        }
 
-            const result = await AppendCourseDataFromExcel(courses, typedarray);
-            setExcelRows(result.rows)
-            setLoadedCourses(result.courses);
-            StopLoading();
+        let courses: Course[] = [];
+        fullCourseList.forEach(course => {
+            let found = false;
+            courseCodes.forEach(courseCode => {
+                if (courseCode.trim() === course.code && !found) {
+                    courses.push(course);
+                    found = true;
+                }
+            });
+        });
 
-            const element = document.getElementById("fileInput");
-            if (element !== undefined) {
-                (element as HTMLInputElement).value = "";
-            }
-        };
-        fileReader.readAsArrayBuffer(data);
-    };
-
-    const refreshExcel = async () => {
-        StartLoading("Loading Curriculum");
-        let response = await fetch(getExcelURL());
-        let data = await response.blob();
-        setExcelUpdateRequest(false);
-        setDisplayCourses(true);
-
-        const fileReader = new FileReader();
-        fileReader.onload = async function (e: Event) {
-            var typedarray = fileReader.result as ArrayBuffer;
-            const result = await GetRowsOfExcel(typedarray);
-            setExcelRows(result);
-            StopLoading();
-        };
-        fileReader.readAsArrayBuffer(data);
-    };
+        courses = addManualData(courses);
+        return courses;
+    }
 
     const onLoginGoogle = async () => {
         GoogleCalenderLoginRequest();
     };
 
     const onTestGoogleCalender = async () => {
-        GoogleCalenderCallTestEvent(loadedCourses);
+        GoogleCalenderCreateEvents(loadedCourses);
     };
 
     const getCredits = (): string => {
@@ -122,7 +151,7 @@ export const App: React.FC = () => {
                 .filter((course) => !course.isTA && course.isExtraClass === undefined || !course.isTA && course.isExtraClass === false)
                 .map((course) => course.credits);
             creditsArray.forEach(credit => {
-                credits += parseInt(credit);
+                credits += parseInt(credit ?? "0");
             });
             return `⭐ Credits: ${credits.toString()}`;
         }
@@ -156,17 +185,17 @@ export const App: React.FC = () => {
                         </label>
                         <span id={css.toogleLabel}>{"2023"}</span>
                     </div>
-                    {
-                        excelUpdateRequest
-                        ? <button className={css.refreshButton} onClick={refreshExcel}>Load curriculum?</button>
-                        : <></>
-                    }
                     <div className={css.uploadContainer}>
                         <label htmlFor="fileInput" className={css.uploadLabel}>Upload and Make Timetable</label>
                         <input type="file" id="fileInput" accept=".pdf" onChange={handleFileChange} />
                     </div>
+                    {
+                        excelUpdateRequest
+                        ? <button className={css.refreshButton} onClick={updateExcel}>Load curriculum?</button>
+                        : <></>
+                    }
                     <div className={css.errorText}>{errorText}</div>
-                    <CourseSearch loadedCourses={loadedCourses} excelRows={excelRows} display={displayCourses} setLoadedCourses={setLoadedCourses} />
+                    <CourseSearch loadedCourses={loadedCourses} allCourses={fullExcelCourses} display={displayCourses} setLoadedCourses={setLoadedCourses} />
                 </div>
                 <div className={css.googleContainer}>
                     <button id={css.loginToGoogle} onClick={onLoginGoogle}>Login to Google</button>

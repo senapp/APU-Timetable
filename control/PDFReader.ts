@@ -1,6 +1,6 @@
 import * as PDFJS from '../pdfjs/pdf.mjs';
 import * as pdfjsWorker from '../pdfjs/pdf.worker.mjs';
-import { Course, Langauge, StringToCourse } from './CourseData';
+import { Langauge, TryGetCourseCode } from './CourseData';
 
 export type Error = {
     messeage: string;
@@ -8,7 +8,7 @@ export type Error = {
 
 export type PDFParseCourseData  = {
     error?: Error;
-    courses: Course[];
+    courseCodes: string[];
 }
 
 export const ParsePDFFile = async (path: ArrayBuffer): Promise<PDFParseCourseData> => {
@@ -40,7 +40,7 @@ export const ParsePDFFile = async (path: ArrayBuffer): Promise<PDFParseCourseDat
 const parseCourseRegData = (totalText: string): PDFParseCourseData => {
     if (totalText.length < 100) {
         return {
-            courses: [],
+            courseCodes: [],
             error: { messeage: "PDF is unreadable. Please go to \"Campus Mate\" and when printing course registration, pick \"Save as PDF\" not \"Microsoft Print to PDF\". | PDF は読み取れません。「Campus Mate」にアクセスし、コース登録を印刷するときに、「Microsoft Print to PDF」ではなく「PDFに保存」を選択してください。" }
         };
     }
@@ -48,52 +48,45 @@ const parseCourseRegData = (totalText: string): PDFParseCourseData => {
     // Japanese or English
     const startIndexEN = totalText.indexOf("Lecture Duration") + 76; // 76 is char until start of string
     const endIndexEN = totalText.indexOf("Total Registered Credits") - 1;
-    const startIndexJP = totalText.indexOf("講義期間") + 47; // 47 is char until start of string
+    const startIndexJP = totalText.indexOf("講義期間") + 43; // 47 is char until start of string
     const endIndexJP = totalText.indexOf("登録単位合計") - 1;
 
     let lines: RegExpMatchArray | null = null;
     let language: Langauge = Langauge.English;
     if (startIndexEN > 76) {
         totalText = totalText.slice(startIndexEN, endIndexEN);
-        lines = totalText.match(/.+?(?=(SP|SP1|SP2|FA|FA1|FA2|SU1|WI1|$))/g);
+        lines = totalText.match(/.+?(?=(SP[12\s]|FA[12\s]|SU[12\s]|WI[12\s]|$))/g);
     } else if (startIndexJP > 47) {
         totalText = totalText.slice(startIndexJP, endIndexJP);
-        lines = totalText.match(/.+?(?=(春|春1|春2|秋|秋1|秋2|夏1|冬1|$))/g);
+        lines = totalText.match(/.+?(?=(春[１２\s]|秋[１２\s]|夏[１２\s]|冬[１２\s]|$))/g);
         language = Langauge.Japanese;
     } else {
         return {
-            courses: [],
+            courseCodes: [],
             error: { messeage: "Could not recognize the Course Registration PDF, are you sure the file is correct? | コース登録 PDF を認識できませんでした。ファイルが正しいかどうか確認してください。" }
         };
     }
 
     if (lines === null || lines === undefined || lines.length === 0) {
         return {
-            courses: [],
+            courseCodes: [],
             error: { messeage: "Could not recognize the Course Registration PDF, are you sure the file is correct? | コース登録 PDF を認識できませんでした。ファイルが正しいかどうか確認してください。" }
         };
     }
 
     let error: Error | undefined;
-    let courses: Course [] = [];
+    let courseCodes: string [] = [];
     lines.forEach(line => {
-        let course = StringToCourse(line, language, courses.map((course) => course.code));
-        if (course === null) {
+        let code = TryGetCourseCode(line);
+        if (code === null || code.length !== 8) {
             error = { messeage: `The following could not be parsed. Please add it manually: ${line} | 以下は解析できませんでした。手動で追加してください: ${line}` }
         } else {
-            for (let index = 0; index < courses.length; index++) {
-                const element = courses[index];
-                if (element.code === course.code) {
-                    course.credits = element.credits;
-                    break;
-                }
-            }
-            courses.push(course);
+            courseCodes.push(code);
         }
     });
 
     return {
-        courses: courses,
+        courseCodes: courseCodes,
         error: error
     };
 };

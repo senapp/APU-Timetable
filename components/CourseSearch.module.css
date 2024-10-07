@@ -1,6 +1,6 @@
 .course-search-container {
-    max-width: 13vw;
-    width: inherit;
+    max-width: 17vw;
+    width: 17vw;
     align-self: center;
 
 }
@@ -33,8 +33,9 @@
     padding: 5px;
     border-radius: 5px;
     gap: 5px;
-    min-width: 11vw;
-    max-width: 11vw;
+    min-width: 15vw;
+    max-width: 15vw;
+    height: 4vw;
 }
 
 .course-add-button {
@@ -63,6 +64,13 @@
     font-size: xx-small;
     text-align: left;
 }
+
+.course-row-min-sem  {
+    font-size: 7px;
+    text-align: left;
+    margin-top: 5px;
+}
+
 
 .course-row-info  {
     font-size: x-small;

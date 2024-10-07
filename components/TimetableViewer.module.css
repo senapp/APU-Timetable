@@ -125,3 +125,30 @@
     content: "TA";
     margin-left: 18px;
 }
+
+.session-class {
+    width: 100%;
+    border-collapse: collapse;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    height: calc(100% / 7);
+    font-size: 14px;
+}
+
+.session-box {
+    font-size: 14px;
+    height: calc(100% / 6);
+    border: 1px solid #ddd;
+    padding: 8px;
+    width: 5vw;
+    font-weight: bold;
+}
+
+
+.session-class-box {
+    width: 55vw;
+    max-width: 55vw;
+    border: 1px solid #ddd;
+    padding: 8px;
+}

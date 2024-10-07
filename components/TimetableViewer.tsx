@@ -64,6 +64,8 @@ export const TimetableViewer: React.FC<Props> = ({courses, forceUpdateParent, se
         forceUpdateParent();
     }
 
+    const sessionCourse = courses.find((course) => course.day == "0");
+
     return (
         <div id={css.calendarContainer}>
             <table id={css.calendarTable}>
@@ -79,6 +81,14 @@ export const TimetableViewer: React.FC<Props> = ({courses, forceUpdateParent, se
                 </thead>
                 {makeTableBody()}
             </table>
+            { sessionCourse !== undefined ?
+                <table className={css.sessionClass}>
+                    <tr>
+                        <td className={css.sessionBox}>{"Session"}</td>
+                        { <ClassBox className={css.sessionClassBox} onUpdateTA={onUpdateTA} course={sessionCourse} /> }
+                    </tr>
+                </table> : <></>
+            }
         </div>
     )
 }
@@ -86,20 +96,21 @@ export const TimetableViewer: React.FC<Props> = ({courses, forceUpdateParent, se
 type PropsClassBox = {
     course?: Course;
     onUpdateTA: (course: Course, checked: boolean) => void;
+    className?: string;
 }
 
-export const ClassBox: React.FC<PropsClassBox> = ({ course, onUpdateTA }) => {
+export const ClassBox: React.FC<PropsClassBox> = ({ course, onUpdateTA, className = "" }) => {
     if (course === undefined) {
         return (<td className={css.cellBox}></td>)
     }
 
-    let collegeClass = course.college === "専門/Major"
+    let collegeClass = course.field === "専門/Major"
         ? css.collegeMajor
-        : course.college === "他学部/Other College"
+        : course.field === "他学部/Other College"
         ? css.collegeOther
-        : course.college === "言語/Language"
+        : course.field === "言語/Language"
         ? css.collegeLangauge
-        : course.college === "教養/Liberal Arts"
+        : course.field === "教養/Liberal Arts"
         ? css.collegeLiberalArts
         : "";
 
@@ -108,30 +119,30 @@ export const ClassBox: React.FC<PropsClassBox> = ({ course, onUpdateTA }) => {
     }
 
     return (
-        <td className={`${css.cellBox} ${collegeClass}`}>
+        <td className={`${css.cellBox} ${collegeClass} ${className}`}>
             {
-                course.name.length > 30
+                course.nameEN.length > 30
                 ? <div className={css.courseName}>
                     {`📖`}
                     <p className={css.marquee}>
-                        <span>{course.name}</span>
+                        <span>{course.nameEN}</span>
                     </p>
                 </div>
                 : <div className={css.courseName}>
-                    {`📖 ${course.name}`}
+                    {`📖 ${course.nameEN}`}
                 </div>
             }
             <div className={css.courseRoom}>{`📍 ${course.location}`}</div>
             {
-                course.instructor.length > 30
+                course.instructorEN.length > 30
                 ? <div className={css.courseInstructor}>
                     {`🧑‍🏫`}
                     <p className={css.marquee}>
-                        <span>{course.instructor}</span>
+                        <span>{course.instructorEN}</span>
                     </p>
                 </div>
                 : <div className={css.courseInstructor}>
-                    {`🧑‍🏫 ${course.instructor}`}
+                    {`🧑‍🏫 ${course.instructorEN}`}
                 </div>
             }
             <div className={css.courseCredits}>{course.isTA ? `⭐ Credits: TA` : `⭐ Credits: ${course.credits}`}</div>

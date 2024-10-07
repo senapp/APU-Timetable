@@ -115,7 +115,7 @@ const CreateOrGetApuCalendar = async (): Promise<string> => {
   });
 }
 
-export const GoogleCalenderCallTestEvent = async (courses: Course[]) => {
+export const GoogleCalenderCreateEvents = async (courses: Course[]) => {
     StartLoading("Getting Google Calendar");
     const apuCalendar = await CreateOrGetApuCalendar();
 
@@ -157,13 +157,13 @@ export const GoogleCalenderCallTestEvent = async (courses: Course[]) => {
         startTime.setHours(startPeriod.hours, startPeriod.minutes, 0);
         endTime.setHours(endPeriod.hours, endPeriod.minutes, 0);
 
-        let colorFromCollege = course.college === "専門/Major"
+        let colorFromCollege = course.field === "専門/Major"
           ? "5"
-          : course.college === "他学部/Other College"
+          : course.field === "他学部/Other College"
           ? "4"
-          : course.college === "言語/Language"
+          : course.field === "言語/Language"
           ? "1"
-          : course.college === "教養/Liberal Arts"
+          : course.field === "教養/Liberal Arts"
           ? "7"
           : "";
 
@@ -172,10 +172,10 @@ export const GoogleCalenderCallTestEvent = async (courses: Course[]) => {
         }
 
         const event = {
-          summary: `📖 ${course.isTA ? `TA: ${course.name}` : course.name}`,
+          summary: `📖 ${course.isTA ? `TA: ${course.nameEN}` : course.nameEN}`,
           location: `📍 ${course.location}`,
           colorId: colorFromCollege,
-          description: `🧑‍🏫 Instructor: ${course.instructor}\n⭐ Credits: ${course.isTA ? "TA" : course.credits}\n🔗 Code: ${course.code}`,
+          description: `🧑‍🏫 Instructor: ${course.instructorEN}\n⭐ Credits: ${course.isTA ? "TA" : course.credits}\n🔗 Code: ${course.code}`,
           recurrence: [`RRULE:FREQ=WEEKLY;UNTIL=${untilTime}`],
           start: {
             dateTime: startTime.toISOString(),

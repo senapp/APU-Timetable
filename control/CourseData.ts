@@ -1,19 +1,23 @@
 import { Row } from "read-excel-file";
+import { Cell } from "read-excel-file/types";
 
 export type Course = {
     quarter: string;
     day: string;
     period: string;
+    location: string;
     code: string;
-    name: string;
+    nameJP: string;
+    nameEN: string;
+    instructorJP: string;
+    instructorEN: string;
     language: string;
-    instructor: string;
-    credits: string; // Is empty "" if isExtraClass is true
+    semesterMin: string;
+    field: string;
 
-    location?: string; // Find from EXCEL by using course code.
-    isExtraClass?: boolean; // Is true if course code as already been parsed
-    college?: string; // Find from EXCEL by using course code. Either "Major" / "Other" / "Liberal Arts"
     isTA?: boolean;
+    credits?: string;
+    isExtraClass?: boolean;
 }
 
 export enum Langauge {
@@ -21,172 +25,36 @@ export enum Langauge {
     Japanese
 }
 
-export const StringToCourse = (courseString: string, language: Langauge, previousCourseCodes: string[]): Course | null => {
-    try
-    {
-        let splits = courseString.trim().split("   ");
-        let isExtraClass = previousCourseCodes.includes(splits[3]);
-        let isLanguageClass = !(splits[5] == "E" || splits[5] == "J");
-        let instructorNameIsSplit =
-            splits.length >= 9 && !isExtraClass ||
-            splits.length >= 8 && isExtraClass ||
-            !isExtraClass && isLanguageClass && splits.length >= 8 ||
-            isExtraClass && isLanguageClass && splits.length >= 7;
-
-        let count = 0;
-
-        let course: Course = {
-            quarter: parseQuarter(splits[count++], language),
-            day: parseDay(parseSplit(splits[count++], language), language),
-            period: parsePeriod(splits[count++], language),
-            code: splits[count++],
-            name: splits[count++],
-            language: !isLanguageClass
-                ? splits[count++]
-                : "",
-            instructor: !instructorNameIsSplit
-                ? parseSplit(splits[count++], language, true)
-                : parseSplit((splits[count++] + splits[count++]), language, true),
-            credits: !isExtraClass
-                ? textToNumberParse(parseSplit(splits[count++], language)).toString()
-                : "",
-            isExtraClass: isExtraClass,
-        }
-        return course;
-    }
-    catch (e) {
+export const TryGetCourseCode = (courseString: string): string | null => {
+    try {
+        return courseString.trim().split("   ")[3].trim();
+    } catch (e) {
         console.log(e);
         return null;
     }
 }
 
-const textToNumberParse = (number: string) => {
-    const matches = number.match(/\d/g);
-    if (matches !== null && matches.length > 0) {
-        return number;
-    } else {
-        switch (number.toLowerCase()) {
-            case "ten":
-                return 10;
-            case "nine":
-                return 9;
-            case "eigth":
-                return 8;
-            case "seven":
-                return 7;
-            case "six":
-                return 6;
-            case "five":
-                return 5;
-            case "four":
-                return 4;
-            case "three":
-                return 3;
-            case "two":
-                return 2;
-            case "one":
-                return 1;
-            default:
-                return 0;
-        }
+const cellToString = (cell: Cell): string => {
+    if (cell === undefined || cell === null) {
+        return "";
     }
-};
-
-const parsePeriod = (periodText: string, language: Langauge):string  => {
-    if (language === Langauge.Japanese) {
-        return periodText === "セッション" ? "Session" : periodText.slice(0,1).replace(
-            /[\uff01-\uff5e]/g,
-            function(ch) {
-                return String.fromCharCode(ch.charCodeAt(0) - 0xfee0); }
-            );
-    } else {
-        return textToNumberParse(periodText).toString();
-    }
-};
-
-const parseQuarter = (quarterText: string, language: Langauge):string  => {
-    if (language === Langauge.Japanese) {
-        let matches = quarterText.replace(
-            /[\uff01-\uff5e]/g,
-            function(ch) {
-                return String.fromCharCode(ch.charCodeAt(0) - 0xfee0); }
-            ).match(/\d/g);
-        return matches !== null ? matches[0] : "0";
-    } else {
-        let matches = quarterText.match(/\d/g);
-        return matches !== null ? matches[0] : "0";
-    }
-};
-
-const parseDay = (dayText: string, language: Langauge):string  => {
-    if (language === Langauge.Japanese) {
-        switch (dayText) {
-            case "⽉曜⽇":
-                return "1";
-            case "⽕曜⽇":
-                return "2";
-            case "水曜⽇":
-                return "3";
-            case "⽊曜⽇":
-                return "4";
-            case "⾦曜⽇":
-                return "5";
-            default:
-                return "0";
-        }
-    } else {
-        switch (dayText) {
-            case "Monday":
-                return "1";
-            case "Tuesday":
-                return "2";
-            case "Wednesday":
-                return "3";
-            case "Thursday":
-                return "4";
-            case "Friday":
-                return "5";
-            default:
-                return "0";
-        }
-    }
-};
-
-const parseSplit = (text: string, language: Langauge, isInstructor: boolean = false): string => {
-    if (language === Langauge.Japanese) {
-        if (isInstructor) {
-            let matches = text.match(/[A-Za-z]/g);
-            return matches === null || matches.length === 0
-                ?  text.split(" ").join("")
-                : text;
-        } else {
-            return text.split(" ").join("");
-        }
-    } else {
-        return text;
-    }
+    return cell.toString();
 }
 
-export const ExcelRowToCourse = (row: Row): Course | null => {
-    try
-    {
-        let course: Course = {
-            quarter: row[0] ? parseQuarterExcel(row[0].toString()) : "",
-            day: row[1] ? parseDayExcel(row[1].toString()) : "",
-            period: row[2] ? row[2].toString() : "",
-            location: row[5] ? row[5].toString() : "",
-            code: row[6] ? row[6].toString() : "",
-            name: row[8] ? row[8].toString() : "",
-            instructor: row[9] ? row[9].toString() : "",
-            language: row[11] ? row[11].toString() : "",
-            credits: "0",
-            college: row[13] ? row[13].toString() : ""
-        }
-        return course;
-    }
-    catch (e) {
-        console.log(e)
-        return null;
+export const ExcelRowToCourse = (row: Row): Course => {
+    return {
+        quarter: parseQuarterExcel(cellToString(row[0])),
+        day: parseDayExcel(cellToString(row[1])),
+        period: cellToString(row[2]),
+        location: cellToString(row[5]),
+        code: cellToString(row[6]),
+        nameJP: cellToString(row[7]),
+        nameEN: cellToString(row[8]),
+        instructorJP: cellToString(row[9]),
+        instructorEN: cellToString(row[10]),
+        language: cellToString(row[11]),
+        semesterMin: cellToString(row[12]),
+        field: cellToString(row[13]),
     }
 }
 
@@ -198,7 +66,7 @@ const parseQuarterExcel = (text: string): string => {
     }
 }
 
-const parseDayExcel = (text: string): string => {
+export const parseDayExcel = (text: string): string => {
     switch (text) {
         case "月/Mon.":
             return "1";
@@ -213,4 +81,56 @@ const parseDayExcel = (text: string): string => {
         default:
             return "0";
     }
+}
+
+export const deParseDay = (text: string): string => {
+    switch (text) {
+        case "1":
+            return "月/Mon.";
+        case "2":
+            return "火/Tue.";
+        case "3":
+            return "水/Wed.";
+        case "4":
+            return "木/Thu.";
+        case "5":
+            return "金/Fri.";
+        default:
+            return "Unkown";
+    }
+}
+
+export const deParseQuarter = (text: string): string => {
+    if (text === "0") {
+        return "Semester";
+    } else {
+        return text + "Q";
+    }
+}
+
+export const addManualData = (courses: Course[]): Course[] => {
+    let newList: Course[] = [];
+    courses.forEach(course => {
+        course.credits = "2";
+        let filter = newList.filter(newCourse => newCourse.code === course.code);
+        if (filter.length === 1) {
+            course.isExtraClass = true;
+            course.credits = "2";
+
+            for (let index = 0; index < filter.length; index++) {
+                filter[index].credits = "2";
+            }
+        } else if (filter.length === 2) {
+            course.isExtraClass = true;
+        } else if (filter.length === 3) {
+            course.isExtraClass = true;
+            course.credits = "4";
+
+            for (let index = 0; index < filter.length; index++) {
+                filter[index].credits = "4";
+            }
+        }
+        newList.push(course);
+    });
+    return newList;
 }
