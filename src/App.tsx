@@ -22,6 +22,8 @@ export const App: React.FC = () => {
     const [currentExcelFile, setCurrentExcelFile] = React.useState("");
     const [, forceUpdate] = React.useReducer(x => x + 1, 0);
 
+    const [searchText, setSearchText] = React.useState("");
+
     React.useEffect(() => {
         if (loadedCourses !== null && loadedCourses.length > 0 && loadedCourses[0].location !== undefined) {
             setDisplayCourses(true);
@@ -137,7 +139,10 @@ export const App: React.FC = () => {
     }
 
     const onLoginGoogle = async () => {
-        GoogleCalenderLoginRequest();
+        GoogleCalenderLoginRequest((resp) => {
+            console.log("Response:", resp);
+            setGoogleToken(resp.access_token)
+        });
     };
 
     const onTestGoogleCalender = async () => {
@@ -157,6 +162,17 @@ export const App: React.FC = () => {
         }
         return "";
     }
+
+    const download = (url: string) => {
+        const a = document.createElement('a');
+        a.href = url;
+        a.target = "_blank"
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      }
+
+    const [googleToken, setGoogleToken] = React.useState<undefined|string>(undefined);
 
     return (
         <div className={css.container}>
@@ -195,11 +211,18 @@ export const App: React.FC = () => {
                         : <></>
                     }
                     <div className={css.errorText}>{errorText}</div>
-                    <CourseSearch loadedCourses={loadedCourses} allCourses={fullExcelCourses} display={displayCourses} setLoadedCourses={setLoadedCourses} />
+                    <CourseSearch inputFilterText={searchText} loadedCourses={loadedCourses} allCourses={fullExcelCourses} display={displayCourses} setLoadedCourses={setLoadedCourses} />
+                    <div className={css.downloadContainer}>
+                        <button className={css.downloadButton} onClick={() => download('https://senapp.github.io/APU-Timetable/sample_files/sample.pdf')}>Sample EN</button>
+                        <button className={css.downloadButton} onClick={() => download('https://senapp.github.io/APU-Timetable/sample_files/sample jp.pdf')}>Sample JP</button>
+                    </div>
                 </div>
                 <div className={css.googleContainer}>
-                    <button id={css.loginToGoogle} onClick={onLoginGoogle}>Login to Google</button>
-                    <button id={css.importGoogleCalendarButton} disabled={loadedCourses.length === 0 && false} onClick={onTestGoogleCalender}>Export Courses</button>
+                    {!googleToken ?
+                        <button id={css.loginToGoogle} onClick={onLoginGoogle}>Login to Google</button>
+                        : <div className={css.loggedIn}>{"Google - Logged In"}</div>
+                    }
+                    {googleToken && <button id={css.importGoogleCalendarButton} disabled={loadedCourses.length === 0 && false} onClick={onTestGoogleCalender}>Export Courses</button>}
                 </div>
             </div>
             <div className={css.main}>
@@ -235,7 +258,7 @@ export const App: React.FC = () => {
                     </div>
                     <div>{getCredits()}</div>
                 </div>
-                <TimetableViewer forceUpdateParent={forceUpdate} setLoadedCourses={setLoadedCourses} courses={loadedCourses} displayCourses={displayCourses} quarterTwoActive={quarterTwoActive} />
+                <TimetableViewer showCourses={(text) => setSearchText(text)} forceUpdateParent={forceUpdate} setLoadedCourses={setLoadedCourses} courses={loadedCourses} displayCourses={displayCourses} quarterTwoActive={quarterTwoActive} />
                 <div className={css.fileUploadInfo}>{fileText}</div>
             </div>
         </div>

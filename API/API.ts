@@ -74,13 +74,13 @@ const initGapiClient = (): void => {
 
 handleClientLoad();
 
-export const GoogleCalenderLoginRequest = async () => {
+export const GoogleCalenderLoginRequest = async (callback: (resp: any) => void) => {
   if (gapi && tokenClient) {
     tokenClient!.callback = (resp: any): void => {
       if (resp.error) {
         console.log(resp.error)
       } else {
-        console.log(resp)
+        callback(resp);
       }
     };
     tokenClient!.error_callback = (resp: any): void => {

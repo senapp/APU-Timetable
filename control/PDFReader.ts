@@ -13,7 +13,7 @@ export type PDFParseCourseData  = {
 
 export const ParsePDFFile = async (path: ArrayBuffer): Promise<PDFParseCourseData> => {
     PDFJS.workerSrc = pdfjsWorker;
-    const loadingTask = PDFJS.getDocument(path as Uint8Array);
+    const loadingTask = PDFJS.getDocument(path as unknown as Uint8Array);
     const pdfDocument = await loadingTask.promise;
 
     // Loading

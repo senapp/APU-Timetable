@@ -264,3 +264,28 @@ input[type="file"] {
 .college-color-text {
 
 }
+
+.logged-in {
+    padding: 5px;
+    border-radius: 5px;
+    margin-bottom: 10px;
+    color: white;
+    background: darkorange;
+    font-style: italic;
+    text-align: center;
+}
+
+.download-container {
+    display: flex;
+    gap: 10px;
+}
+
+.download-button {
+    background-color: #f44242;
+    font-size: 13px;
+}
+
+.download-button:hover {
+    background-color: #e81a1a;
+    transition: background-color 0.3s ease;
+}

@@ -2,16 +2,22 @@ import * as React from 'react';
 import css from './CourseSearch.module.css';
 import { Row } from 'read-excel-file';
 import { addManualData, Course, deParseDay, deParseQuarter, ExcelRowToCourse, parseDayExcel } from '../control/CourseData';
+import { StartLoading, StopLoading } from '../src';
 
 type Props = {
     allCourses?: Course[];
     display: boolean;
     loadedCourses: Course[]
     setLoadedCourses: (courses: Course[]) => void;
+    inputFilterText?: string;
 }
 
-export const CourseSearch: React.FC<Props> = ({ allCourses, display, loadedCourses, setLoadedCourses }) => {
-    const [filterText, setFilterText] = React.useState("");
+export const CourseSearch: React.FC<Props> = ({ allCourses, display, inputFilterText = "", loadedCourses, setLoadedCourses }) => {
+    const [filterText, setFilterText] = React.useState(inputFilterText);
+
+    React.useEffect(() => {
+        setFilterText(inputFilterText);
+    }, [inputFilterText]);
 
     const addNewCourse = (selectedCourse: Course) => {
         if (!allCourses) {
@@ -30,7 +36,9 @@ export const CourseSearch: React.FC<Props> = ({ allCourses, display, loadedCours
             loadedCourses.forEach(currentCourse => {
                 if (newCourse.code === currentCourse.code) {
                     error = true;
-                    console.error("Cant add course because it already is added");
+                    console.error("Can't add course because it already is added");
+                    StartLoading("Can't add course because it already is added")
+                    setTimeout(() => StopLoading(), 2000);
                     return;
                 }
 
@@ -40,7 +48,9 @@ export const CourseSearch: React.FC<Props> = ({ allCourses, display, loadedCours
                         || newCourse.quarter === currentCourse.quarter
                     ) {
                         error = true;
-                        console.error("Cant add course over already exisiting courses");
+                        console.error("Can't add course over already exisiting courses");
+                        StartLoading("Can't add course over already exisiting courses")
+                        setTimeout(() => StopLoading(), 2000);
                         return;
                     }
                 }
@@ -147,13 +157,13 @@ export const CourseRow: React.FC<PropsCourseRow> = ({ course, courses, addFuncti
                 ? <div className={css.courseRowMainContainer}>
                     <div className={css.courseRowName}>{`${course.nameEN}`}</div>
                     <div className={css.courseRowQuarter}>{`${deParseQuarter(course.quarter)}`}</div>
-                    <div className={css.courseRowMinSem}>{`Avaible from semester: ${course.semesterMin}`}</div>
+                    <div className={css.courseRowMinSem}>{`Availble from semester: ${course.semesterMin}`}</div>
                 </div>
                 : courses
                     ? <div className={css.courseRowMainContainer}>
                         <div className={css.courseRowName}>{`${courses[0].nameEN}`}</div>
                         <div className={css.courseRowQuarter}>{`${deParseQuarter(courses[0].quarter)}`}</div>
-                        <div className={css.courseRowMinSem}>{`Avaible from semester: ${courses[0].semesterMin}`}</div>
+                        <div className={css.courseRowMinSem}>{`Availble from semester: ${courses[0].semesterMin}`}</div>
                         </div>
                     : <div className={css.courseRowName}>{"Specify you search..."}</div>
             }

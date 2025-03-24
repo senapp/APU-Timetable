@@ -1,5 +1,3 @@
-import {Course} from './CourseData'
-
 export const PeriodStartTimes: { [key: string]: { hours: number, minutes: number } } = {
     "1": {hours: 8, minutes: 45},
     "2": {hours: 10, minutes: 35},
