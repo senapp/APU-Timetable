@@ -80,6 +80,7 @@ export const GoogleCalenderLoginRequest = async (callback: (resp: any) => void) 
       if (resp.error) {
         console.log(resp.error)
       } else {
+        console.log(gapi.client);
         callback(resp);
       }
     };
