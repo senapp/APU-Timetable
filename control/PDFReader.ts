@@ -45,6 +45,27 @@ const parseCourseRegData = (totalText: string): PDFParseCourseData => {
         };
     }
 
+    
+    if (totalText.includes("履 修 登 録 確 認")) {
+        let filteredText = "";
+        for (let index = 0; index < totalText.length - 2; index++) {
+            if (totalText[index] === " ") {
+                if (totalText[index] === " " && totalText[index + 1] === " " && index[index + 2] === " ") {
+                    index = index + 2;
+                    filteredText += "   ";
+                } else if (totalText[index] === " " && totalText[index + 1] === " ") {
+                    index = index + 1;
+                    filteredText += "   ";
+                } else {
+                    continue;
+                }
+            } else {
+                filteredText += totalText[index];
+            }
+        }
+        totalText = filteredText;
+    }
+    
     // Japanese or English
     const startIndexEN = totalText.indexOf("Lecture Duration") + 76; // 76 is char until start of string
     const endIndexEN = totalText.indexOf("Total Registered Credits") - 1;
@@ -77,11 +98,15 @@ const parseCourseRegData = (totalText: string): PDFParseCourseData => {
     let error: Error | undefined;
     let courseCodes: string [] = [];
     lines.forEach(line => {
-        let code = TryGetCourseCode(line);
-        if (code === null || code.length !== 8) {
-            error = { messeage: `The following could not be parsed. Please add it manually: ${line} | 以下は解析できませんでした。手動で追加してください: ${line}` }
+        if (line.length > 5) {
+            let code = TryGetCourseCode(line);
+            if (code === null || code.length !== 8) {
+                error = { messeage: `The following could not be parsed. Please add it manually: ${line} | 以下は解析できませんでした。手動で追加してください: ${line}` }
+            } else {
+                courseCodes.push(code);
+            }
         } else {
-            courseCodes.push(code);
+            // Ignore, parsing artifacts
         }
     });
 
