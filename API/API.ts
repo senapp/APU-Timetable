@@ -126,14 +126,14 @@ export const GoogleCalenderCreateEvents = async (courses: Course[]) => {
             return;
         }
 
-        const startTimeQ1 = "20250407";
-        const endTimeQ1 = "20250524";
+        const startTimeQ1 = "20251001";
+        const endTimeQ1 = "20251119";
 
         const startBreak1 = "20250526";
         const endBreak1 = "20250603";
 
-        const startTimeQ2 = "20250604";
-        const endTimeQ2 = "20250723";
+        const startTimeQ2 = "20251126";
+        const endTimeQ2 = "20260127";
 
         const untilTime = course.quarter == "1"
           ? endTimeQ1
